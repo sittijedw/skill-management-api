@@ -16,7 +16,7 @@ import (
 )
 
 type Skill struct {
-	Key         string   `json:"id"`
+	Key         string   `json:"key"`
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
 	Logo        string   `json:"logo"`
@@ -26,6 +26,16 @@ type Skill struct {
 type GetSkillsResponse struct {
 	Status string  `json:"status"`
 	Data   []Skill `json:"data"`
+}
+
+type GetSkillResponse struct {
+	Status string `json:"status"`
+	Data   Skill  `json:"data"`
+}
+
+type FailureResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }
 
 var DB *sql.DB
@@ -41,7 +51,7 @@ func main() {
 	v1 := r.Group("/api/v1")
 	{
 		v1.GET("/skills", getSkillsHandler)
-		// v1.GET("/skills/:key", getSkillByKeyHandler)
+		v1.GET("/skills/:key", getSkillByKeyHandler)
 		// v1.POST("/skills", createSkillHandler)
 		// v1.PUT("/skills/:key", updateSkillByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/name", updateSkillNameByKeyHandler)
@@ -115,10 +125,27 @@ func getSkillsHandler(ctx *gin.Context) {
 		skills = append(skills, skill)
 	}
 
-	var getSkillsResponse GetSkillsResponse
-	getSkillsResponse.Status = "success"
-	getSkillsResponse.Data = skills
+	getSkillsResponse := GetSkillsResponse{Status: "success", Data: skills}
 
 	ctx.JSON(http.StatusOK, getSkillsResponse)
 	log.Println("Get skills success")
+}
+
+func getSkillByKeyHandler(ctx *gin.Context) {
+	paramKey := ctx.Param("key")
+
+	row := DB.QueryRow("SELECT key, name, description, logo, tags FROM skill where key=$1", paramKey)
+
+	var skill Skill
+
+	err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
+
+	if err != nil {
+		failureResponse := FailureResponse{Status: "error", Message: "Skill not found"}
+		ctx.JSON(http.StatusNotFound, failureResponse)
+		return
+	}
+
+	getSkillResponse := GetSkillResponse{Status: "success", Data: skill}
+	ctx.JSON(http.StatusOK, getSkillResponse)
 }
