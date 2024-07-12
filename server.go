@@ -33,7 +33,7 @@ type SkillResponse struct {
 	Data   Skill  `json:"data"`
 }
 
-type FailureResponse struct {
+type Response struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
@@ -58,7 +58,7 @@ func main() {
 		v1.PATCH("skills/:key/actions/description", updateSkillDescriptionByKeyHandler)
 		v1.PATCH("skills/:key/actions/logo", updateSkillLogoByKeyHandler)
 		v1.PATCH("skills/:key/actions/tags", updateSkillTagsByKeyHandler)
-		// v1.DELETE("/skills/:key", deleteSkillByKeyHandler)
+		v1.DELETE("/skills/:key", deleteSkillByKeyHandler)
 	}
 
 	srv := http.Server{
@@ -140,8 +140,9 @@ func getSkillByKeyHandler(ctx *gin.Context) {
 	err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
 
 	if err != nil {
-		failureResponse := FailureResponse{Status: "error", Message: "Skill not found"}
-		ctx.JSON(http.StatusNotFound, failureResponse)
+		log.Println("Error: Skill not found")
+		Response := Response{Status: "error", Message: "Skill not found"}
+		ctx.JSON(http.StatusNotFound, Response)
 		return
 	}
 
@@ -161,8 +162,9 @@ func createSkillHandler(ctx *gin.Context) {
 	err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
 
 	if err != nil {
-		failureResponse := FailureResponse{Status: "error", Message: "Skill already exists"}
-		ctx.JSON(http.StatusConflict, failureResponse)
+		log.Println("Error: Skill already exists")
+		Response := Response{Status: "error", Message: "Skill already exists"}
+		ctx.JSON(http.StatusConflict, Response)
 		return
 	}
 
@@ -181,8 +183,6 @@ func updateSkill(ctx *gin.Context, updateField string) {
 	}
 
 	skill.Key = ctx.Param("key")
-
-	log.Println("skill:", skill)
 
 	if updateField == "all" {
 		row = DB.QueryRow("UPDATE skill SET name=$1, description=$2, logo=$3, tags=$4 WHERE key=$5 RETURNING key, name, description, logo, tags", skill.Name, skill.Description, skill.Logo, pq.Array(skill.Tags), skill.Key)
@@ -205,8 +205,9 @@ func updateSkill(ctx *gin.Context, updateField string) {
 		} else {
 			message = "not be able to update skill " + updateField
 		}
-		failureResponse := FailureResponse{Status: "error", Message: message}
-		ctx.JSON(http.StatusBadRequest, failureResponse)
+		log.Println("Error:", message)
+		Response := Response{Status: "error", Message: message}
+		ctx.JSON(http.StatusBadRequest, Response)
 		return
 	}
 
@@ -232,4 +233,23 @@ func updateSkillLogoByKeyHandler(ctx *gin.Context) {
 
 func updateSkillTagsByKeyHandler(ctx *gin.Context) {
 	updateSkill(ctx, "tags")
+}
+
+func deleteSkillByKeyHandler(ctx *gin.Context) {
+	var skill Skill
+	paramKey := ctx.Param("key")
+
+	row := DB.QueryRow("DELETE FROM skill WHERE key=$1 RETURNING key, name, description, logo, tags", paramKey)
+
+	err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
+
+	if err != nil {
+		log.Println("Error:", err)
+		Response := Response{Status: "error", Message: "not be able to delete skill"}
+		ctx.JSON(http.StatusBadRequest, Response)
+		return
+	}
+
+	Response := Response{Status: "success", Message: "Skill deleted"}
+	ctx.JSON(http.StatusOK, Response)
 }
