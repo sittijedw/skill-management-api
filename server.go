@@ -53,7 +53,7 @@ func main() {
 		v1.GET("/skills", getSkillsHandler)
 		v1.GET("/skills/:key", getSkillByKeyHandler)
 		v1.POST("/skills", createSkillHandler)
-		// v1.PUT("/skills/:key", updateSkillByKeyHandler)
+		v1.PUT("/skills/:key", updateSkillByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/name", updateSkillNameByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/description", updateSkillDescriptionByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/logo", updateSkillLogoByKeyHandler)
@@ -171,4 +171,37 @@ func createSkillHandler(ctx *gin.Context) {
 	createSkillResponse := SkillResponse{Status: "success", Data: skill}
 	ctx.JSON(http.StatusOK, createSkillResponse)
 	log.Println("Create skill success")
+}
+
+func updateSkill(ctx *gin.Context, updateField string) {
+	var skill Skill
+
+	err := ctx.BindJSON(&skill)
+
+	if err != nil {
+		ctx.Error(err)
+	}
+
+	skill.Key = ctx.Param("key")
+
+	log.Println("skill:", skill)
+
+	if updateField == "all" {
+		row := DB.QueryRow("UPDATE skill SET name=$1, description=$2, logo=$3, tags=$4 WHERE key=$5 RETURNING key, name, description, logo, tags", skill.Name, skill.Description, skill.Logo, pq.Array(skill.Tags), skill.Key)
+
+		err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
+
+		if err != nil {
+			failureResponse := FailureResponse{Status: "error", Message: "not be able to update skill"}
+			ctx.JSON(http.StatusBadRequest, failureResponse)
+			return
+		}
+
+		log.Println("Update skill success")
+		ctx.JSON(http.StatusOK, skill)
+	}
+}
+
+func updateSkillByKeyHandler(ctx *gin.Context) {
+	updateSkill(ctx, "all")
 }
