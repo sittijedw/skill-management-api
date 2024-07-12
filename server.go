@@ -28,7 +28,7 @@ type GetSkillsResponse struct {
 	Data   []Skill `json:"data"`
 }
 
-type GetSkillResponse struct {
+type SkillResponse struct {
 	Status string `json:"status"`
 	Data   Skill  `json:"data"`
 }
@@ -52,7 +52,7 @@ func main() {
 	{
 		v1.GET("/skills", getSkillsHandler)
 		v1.GET("/skills/:key", getSkillByKeyHandler)
-		// v1.POST("/skills", createSkillHandler)
+		v1.POST("/skills", createSkillHandler)
 		// v1.PUT("/skills/:key", updateSkillByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/name", updateSkillNameByKeyHandler)
 		// v1.PATCH("/api/v1/skills/:key/actions/description", updateSkillDescriptionByKeyHandler)
@@ -146,6 +146,29 @@ func getSkillByKeyHandler(ctx *gin.Context) {
 		return
 	}
 
-	getSkillResponse := GetSkillResponse{Status: "success", Data: skill}
+	getSkillResponse := SkillResponse{Status: "success", Data: skill}
 	ctx.JSON(http.StatusOK, getSkillResponse)
+	log.Println("Get skill by key success")
+}
+
+func createSkillHandler(ctx *gin.Context) {
+	var skill Skill
+
+	if err := ctx.BindJSON(&skill); err != nil {
+		ctx.Error(err)
+	}
+
+	row := DB.QueryRow("INSERT INTO skill (key, name, description, logo, tags) VALUES ($1, $2, $3, $4, $5) RETURNING key, name, description, logo, tags", skill.Key, skill.Name, skill.Description, skill.Logo, pq.Array(skill.Tags))
+
+	err := row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
+
+	if err != nil {
+		failureResponse := FailureResponse{Status: "error", Message: "Skill already exists"}
+		ctx.JSON(http.StatusConflict, failureResponse)
+		return
+	}
+
+	createSkillResponse := SkillResponse{Status: "success", Data: skill}
+	ctx.JSON(http.StatusOK, createSkillResponse)
+	log.Println("Create skill success")
 }
