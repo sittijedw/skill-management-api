@@ -57,7 +57,7 @@ func main() {
 		v1.PATCH("skills/:key/actions/name", updateSkillNameByKeyHandler)
 		v1.PATCH("skills/:key/actions/description", updateSkillDescriptionByKeyHandler)
 		v1.PATCH("skills/:key/actions/logo", updateSkillLogoByKeyHandler)
-		// v1.PATCH("skills/:key/actions/tags", updateSkillTagsByKeyHandler)
+		v1.PATCH("skills/:key/actions/tags", updateSkillTagsByKeyHandler)
 		// v1.DELETE("/skills/:key", deleteSkillByKeyHandler)
 	}
 
@@ -192,6 +192,8 @@ func updateSkill(ctx *gin.Context, updateField string) {
 		row = DB.QueryRow("UPDATE skill SET description=$1 WHERE key=$2 RETURNING key, name, description, logo, tags", skill.Description, skill.Key)
 	} else if updateField == "logo" {
 		row = DB.QueryRow("UPDATE skill SET logo=$1 WHERE key=$2 RETURNING key, name, description, logo, tags", skill.Logo, skill.Key)
+	} else if updateField == "tags" {
+		row = DB.QueryRow("UPDATE skill SET tags=$1 WHERE key=$2 RETURNING key, name, description, logo, tags", pq.Array(skill.Tags), skill.Key)
 	}
 
 	err = row.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
@@ -226,4 +228,8 @@ func updateSkillDescriptionByKeyHandler(ctx *gin.Context) {
 
 func updateSkillLogoByKeyHandler(ctx *gin.Context) {
 	updateSkill(ctx, "logo")
+}
+
+func updateSkillTagsByKeyHandler(ctx *gin.Context) {
+	updateSkill(ctx, "tags")
 }
