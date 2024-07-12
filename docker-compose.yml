@@ -1,0 +1,12 @@
+version: ${DOCKER_VERSION}
+services:
+  database:
+    image: ${DOCKER_IMAGE}
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - ${DATABASE_PORTS}
+    volumes:
+      - ${DATABASE_VOLUMES}
