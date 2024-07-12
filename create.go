@@ -37,6 +37,8 @@ func connectDB() *sql.DB {
 
 	if err != nil {
 		log.Println("Error: Can't connect to database", err)
+	} else {
+		log.Println("Connect database success")
 	}
 
 	return db

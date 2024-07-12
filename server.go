@@ -12,8 +12,21 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 )
+
+type Skill struct {
+	Key         string   `json:"id"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Logo        string   `json:"logo"`
+	Tags        []string `json:"tags"`
+}
+
+type GetSkillsResponse struct {
+	Status string  `json:"status"`
+	Data   []Skill `json:"data"`
+}
 
 var DB *sql.DB
 
@@ -25,7 +38,18 @@ func main() {
 	defer DB.Close()
 
 	r := gin.Default()
-	r.GET("/", helloWorldHandler)
+	v1 := r.Group("/api/v1")
+	{
+		v1.GET("/skills", getSkillsHandler)
+		// v1.GET("/skills/:key", getSkillByKeyHandler)
+		// v1.POST("/skills", createSkillHandler)
+		// v1.PUT("/skills/:key", updateSkillByKeyHandler)
+		// v1.PATCH("/api/v1/skills/:key/actions/name", updateSkillNameByKeyHandler)
+		// v1.PATCH("/api/v1/skills/:key/actions/description", updateSkillDescriptionByKeyHandler)
+		// v1.PATCH("/api/v1/skills/:key/actions/logo", updateSkillLogoByKeyHandler)
+		// v1.PATCH("/api/v1/skills/:key/actions/tags", updateSkillTagsByKeyHandler)
+		// v1.DELETE("/skills/:key", deleteSkillByKeyHandler)
+	}
 
 	srv := http.Server{
 		Addr:    ":" + os.Getenv("PORT"),
@@ -62,11 +86,39 @@ func connectDB() *sql.DB {
 
 	if err != nil {
 		log.Println("Error: Can't connect to database", err)
+	} else {
+		log.Println("Connect database success")
 	}
 
 	return db
 }
 
-func helloWorldHandler(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, "Hello, World")
+func getSkillsHandler(ctx *gin.Context) {
+	rows, err := DB.Query("SELECT key, name, description, logo, tags FROM skill")
+
+	if err != nil {
+		log.Println("Error: Can't get skills")
+		return
+	}
+
+	var skills []Skill
+	for rows.Next() {
+		var skill Skill
+
+		err := rows.Scan(&skill.Key, &skill.Name, &skill.Description, &skill.Logo, pq.Array(&skill.Tags))
+
+		if err != nil {
+			log.Println("Error: Can't scan row to skill struct")
+			return
+		}
+
+		skills = append(skills, skill)
+	}
+
+	var getSkillsResponse GetSkillsResponse
+	getSkillsResponse.Status = "success"
+	getSkillsResponse.Data = skills
+
+	ctx.JSON(http.StatusOK, getSkillsResponse)
+	log.Println("Get skills success")
 }
