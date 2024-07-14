@@ -510,4 +510,24 @@ test.describe('Update skill description', () => {
 
     await request.delete(apiUrlPrefix + '/skills/python')
   })
+
+  test('should response status "error" with message "not be able to update skill description" when request PATCH /skills/:key/actions/description', async ({
+    request,
+  }) => {
+    const updateResponse = await request.patch(apiUrlPrefix + '/skills/python/actions/description',
+      {
+        data: {
+          description: 'Python 3 is the latest version of Python programming language.',
+        }
+      }
+    )
+
+    expect(updateResponse.status()).toEqual(400)
+    expect(await updateResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'not be able to update skill description',
+      })
+    )
+  })
 })
