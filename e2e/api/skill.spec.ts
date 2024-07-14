@@ -345,7 +345,7 @@ test.describe('Update skill', () => {
 })
 
 test.describe('Update skill name', () => {
-  test('should response updated skill name with status "success" when request PUT /skills/:key/actions/name', async ({
+  test('should response updated skill name with status "success" when request PATCH /skills/:key/actions/name', async ({
     request,
   }) => {
     await request.post(apiUrlPrefix + '/skills',
@@ -417,7 +417,7 @@ test.describe('Update skill name', () => {
     await request.delete(apiUrlPrefix + '/skills/python')
   })
 
-  test('should response status "error" with message "not be able to update skill name" when request PUT /skills/:key/actions/name', async ({
+  test('should response status "error" with message "not be able to update skill name" when request PATCH /skills/:key/actions/name', async ({
     request,
   }) => {
     const updateResponse = await request.patch(apiUrlPrefix + '/skills/python/actions/name',
@@ -439,7 +439,7 @@ test.describe('Update skill name', () => {
 })
 
 test.describe('Update skill description', () => {
-  test('should response updated skill description with status "success" when request PUT /skills/:key/actions/description', async ({
+  test('should response updated skill description with status "success" when request PATCH /skills/:key/actions/description', async ({
     request,
   }) => {
     await request.post(apiUrlPrefix + '/skills',
