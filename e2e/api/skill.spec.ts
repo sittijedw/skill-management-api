@@ -416,4 +416,24 @@ test.describe('Update skill name', () => {
 
     await request.delete(apiUrlPrefix + '/skills/python')
   })
+
+  test('should response status "error" with message "not be able to update skill name" when request PUT /skills/:key/actions/name', async ({
+    request,
+  }) => {
+    const updateResponse = await request.patch(apiUrlPrefix + '/skills/python/actions/name',
+      {
+        data: {
+          name: 'Python 3',
+        }
+      }
+    )
+
+    expect(updateResponse.status()).toEqual(400)
+    expect(await updateResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'not be able to update skill name',
+      })
+    )
+  })
 })
