@@ -204,4 +204,42 @@ test.describe('Create skill', () => {
 
     await request.delete(apiUrlPrefix + '/skills/python')
   })
+
+  test('should response status "error" with message "Skill already exists" when request POST /skills', async ({
+    request,
+  }) => {
+    await request.post(apiUrlPrefix + '/skills',
+      {
+        data: {
+          key: 'python',
+          name: 'Python',
+          description: 'Python is an interpreted, high-level, general-purpose programming language.',
+          logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg',
+          tags: ['programming language', 'scripting']
+        }
+      }
+    )
+
+    const postResponse = await request.post(apiUrlPrefix + '/skills',
+      {
+        data: {
+          key: 'python',
+          name: 'Python3',
+          description: 'Python3 is an interpreted, high-level, general-purpose programming language.',
+          logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg',
+          tags: ['programming language']
+        }
+      }
+    )
+  
+    expect(postResponse.status()).toEqual(409)
+    expect(await postResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'Skill already exists',
+      })
+    )
+
+    await request.delete(apiUrlPrefix + '/skills/python')
+  })
 })
