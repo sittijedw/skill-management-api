@@ -772,4 +772,18 @@ test.describe('Delete skill', () => {
       })
     )
   })
+
+  test('should response status "error" with message "not be able to delete skill" when request DELETE /skills/:key', async ({
+    request,
+  }) => {
+    const deleteResponse = await request.delete(apiUrlPrefix + '/skills/python')
+
+    expect(deleteResponse.status()).toEqual(400)
+    expect(await deleteResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'not be able to delete skill',
+      })
+    )
+  })
 })
