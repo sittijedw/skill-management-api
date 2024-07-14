@@ -111,7 +111,7 @@ func getSkillsHandler(ctx *gin.Context) {
 		return
 	}
 
-	var skills []Skill
+	var skills = make([]Skill, 0)
 	for rows.Next() {
 		var skill Skill
 
