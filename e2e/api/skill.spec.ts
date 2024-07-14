@@ -319,4 +319,27 @@ test.describe('Update skill', () => {
 
     await request.delete(apiUrlPrefix + '/skills/python')
   })
+
+  test('should response status "error" with message "not be able to update skill" when request PUT /skills/:key', async ({
+    request,
+  }) => {
+    const updateResponse = await request.put(apiUrlPrefix + '/skills/python',
+      {
+        data: {
+          name: 'Python 3',
+          description: 'Python 3 is the latest version of Python programming language.',
+          logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg',
+          tags: ['data'],
+        }
+      }
+    )
+
+    expect(updateResponse.status()).toEqual(400)
+    expect(await updateResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'not be able to update skill',
+      })
+    )
+  })
 })
