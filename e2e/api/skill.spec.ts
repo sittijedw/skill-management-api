@@ -53,7 +53,7 @@ test.describe('Get skill by key', () => {
 })
 
 test.describe('Get skills', () => {
-  test('should response skills with status "success" when request GET /skills/:key', async ({
+  test('should response skills with status "success" when request GET /skills', async ({
     request,
   }) => {
     await request.post(apiUrlPrefix + '/skills',
@@ -129,7 +129,7 @@ test.describe('Get skills', () => {
     await request.delete(apiUrlPrefix + '/skills/nodejs')
   })
 
-  test('should response empty list with status "success" when request GET /skills/:key', async ({
+  test('should response empty list with status "success" when request GET /skills', async ({
     request,
   }) => {
     const resp = await request.get(apiUrlPrefix + '/skills')
@@ -715,6 +715,60 @@ test.describe('Update skill tags', () => {
       expect.objectContaining({
         status: 'error',
         message: 'not be able to update skill tags',
+      })
+    )
+  })
+})
+
+test.describe('Delete skill', () => {
+  test('should response status "success" with message "Skill deleted" when request DELETE /skills/:key', async ({
+    request,
+  }) => {
+    await request.post(apiUrlPrefix + '/skills',
+      {
+        data: {
+          key: 'python',
+          name: 'Python',
+          description: 'Python is an interpreted, high-level, general-purpose programming language.',
+          logo: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Python-logo-notext.svg',
+          tags: ['programming language', 'scripting']
+        }
+      }
+    )
+    
+    const getResponseBefore = await request.get(apiUrlPrefix + '/skills/python')
+  
+    expect(getResponseBefore.ok()).toBeTruthy()
+    expect(await getResponseBefore.json()).toEqual(
+      expect.objectContaining({
+        status: 'success',
+        data: expect.objectContaining({
+          key: 'python',
+          name: expect.any(String),
+          description: expect.any(String),
+          logo: expect.any(String),
+          tags: expect.any(Array),
+        })
+      })
+    )
+
+    const deleteResponse = await request.delete(apiUrlPrefix + '/skills/python')
+
+    expect(deleteResponse.ok()).toBeTruthy()
+    expect(await deleteResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'success',
+        message: 'Skill deleted',
+      })
+    )
+
+    const getResponseAfter = await request.get(apiUrlPrefix + '/skills/python')
+  
+    expect(getResponseAfter.status()).toEqual(404)
+    expect(await getResponseAfter.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'Skill not found',
       })
     )
   })
