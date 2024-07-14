@@ -698,4 +698,24 @@ test.describe('Update skill tags', () => {
 
     await request.delete(apiUrlPrefix + '/skills/python')
   })
+
+  test('should response status "error" with message "not be able to update skill tags" when request PATCH /skills/:key/actions/tags', async ({
+    request,
+  }) => {
+    const updateResponse = await request.patch(apiUrlPrefix + '/skills/python/actions/tags',
+      {
+        data: {
+          tags: ['programming language', 'data'],
+        }
+      }
+    )
+
+    expect(updateResponse.status()).toEqual(400)
+    expect(await updateResponse.json()).toEqual(
+      expect.objectContaining({
+        status: 'error',
+        message: 'not be able to update skill tags',
+      })
+    )
+  })
 })
